@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proyecto 3 - Velocidad de Transferencia de Datos | Modo Oscuro</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+            background: #0a0a0f;
+            color: #e4e4e7;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            background: linear-gradient(135deg, #667eea 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #9ca3af;
+            font-size: 1.1em;
+        }
+
+        /* Controles */
+        .controls {
+            background: #111114;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 30px;
+            border: 1px solid #2d2d35;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 160px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #9ca3af;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .control-group input {
+            background: #1f1f24;
+            border: 1px solid #3f3f46;
+            color: #e4e4e7;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 1em;
+            transition: all 0.2s;
+        }
+
+        .control-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #a855f7 100%);
+            color: white;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            height: 42px;
+            align-self: flex-end;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Grid de gráficas */
+        .graphs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .graph-card {
+            background: #111114;
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid #2d2d35;
+            transition: transform 0.2s;
+        }
+
+        .graph-card:hover {
+            border-color: #667eea;
+        }
+
+        .graph-card h3 {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        canvas {
+            max-height: 280px;
+            width: 100%;
+        }
+
+        /* Panel de información */
+        .info-panel {
+            background: #111114;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 30px;
+            border: 1px solid #2d2d35;
+        }
+
+        .info-panel h3 {
+            color: #a855f7;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .info-card {
+            background: #1a1a1f;
+            padding: 18px;
+            border-radius: 16px;
+            border-left: 3px solid #667eea;
+        }
+
+        .info-card h4 {
+            color: #9ca3af;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .info-card .value {
+            font-size: 1.8em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .info-card .unit {
+            font-size: 0.9em;
+            color: #6b7280;
+        }
+
+        .formula-box {
+            background: #1a1a1f;
+            padding: 16px;
+            border-radius: 16px;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 1em;
+            text-align: center;
+            margin: 15px 0;
+            border: 1px solid #2d2d35;
+            color: #a78bfa;
+        }
+
+        .recomendacion {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+            border-left: 4px solid #a855f7;
+            padding: 20px;
+            border-radius: 16px;
+            margin-top: 20px;
+        }
+
+        .recomendacion strong {
+            color: #a855f7;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+            font-size: 0.85em;
+            border-top: 1px solid #2d2d35;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 1100px) {
+            .graphs-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🚀 Velocidad de Transferencia de Datos</h1>
+        <p>Modelado matemático con cálculo diferencial | Análisis de rendimiento en servidores de descarga</p>
+        <p style="font-size: 0.9em; margin-top: 12px;">📊 Proyecto 3 - Velocidad por conexión | Velocidad total | Derivada | Eficiencia</p>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <label>📡 Ancho de banda máximo (B) Mbps</label>
+            <input type="number" id="bandwidth" value="100" step="10">
+        </div>
+        <div class="control-group">
+            <label>⚙️ Factor de sobrecarga (k)</label>
+            <input type="number" id="overhead" value="2" step="1">
+        </div>
+        <div class="control-group">
+            <label>🎯 Velocidad mínima (v₀) Mbps</label>
+            <input type="number" id="minSpeed" value="5" step="1">
+        </div>
+        <div class="control-group">
+            <label>📏 Conexiones máximas a graficar</label>
+            <input type="number" id="maxX" value="60" step="10">
+        </div>
+        <button id="updateBtn">🔄 Actualizar análisis</button>
+    </div>
+
+    <div class="graphs-grid">
+        <div class="graph-card">
+            <h3>📉 Velocidad por conexión | v(x) = B/(x+k) + v₀</h3>
+            <canvas id="graficaVelocidad"></canvas>
+        </div>
+        <div class="graph-card">
+            <h3>📈 Velocidad total del sistema | T(x) = x·v(x)</h3>
+            <canvas id="graficaTotal"></canvas>
+        </div>
+        <div class="graph-card">
+            <h3>📐 Derivada v'(x) = -B/(x+k)² | Tasa de cambio</h3>
+            <canvas id="graficaDerivada"></canvas>
+        </div>
+        <div class="graph-card">
+            <h3>⚡ Eficiencia del sistema | E(x) = [T(x)/B] × 100%</h3>
+            <canvas id="graficaEficiencia"></canvas>
+        </div>
+    </div>
+
+    <div class="info-panel">
+        <h3>📊 Análisis Matemático y Decisiones Técnicas</h3>
+        <div class="formula-box" id="formulaModelo">
+            v(x) = 100/(x+2) + 5 Mbps
+        </div>
+        
+        <div class="info-grid">
+            <div class="info-card">
+                <h4>🎯 Punto óptimo (velocidad ≥ 10 Mbps)</h4>
+                <div class="value" id="conexionesOptimas">-</div>
+                <div class="unit">conexiones simultáneas</div>
+            </div>
+            <div class="info-card">
+                <h4>⚡ Velocidad por conexión en óptimo</h4>
+                <div class="value" id="velocidadOptima">-</div>
+                <div class="unit">Mbps</div>
+            </div>
+            <div class="info-card">
+                <h4>📊 Velocidad total en óptimo</h4>
+                <div class="value" id="velocidadTotalOptima">-</div>
+                <div class="unit">Mbps</div>
+            </div>
+            <div class="info-card">
+                <h4>📐 Derivada v'(x₀) en óptimo</h4>
+                <div class="value" id="derivadaValor">-</div>
+                <div class="unit">Mbps por conexión</div>
+            </div>
+            <div class="info-card">
+                <h4>📈 Eficiencia en óptimo</h4>
+                <div class="value" id="eficienciaOptima">-</div>
+                <div class="unit">% del ancho de banda</div>
+            </div>
+        </div>
+
+        <div id="recomendacionContainer"></div>
+    </div>
+
+    <div class="info-panel">
+        <h3>🧮 Aplicación del Cálculo Diferencial</h3>
+        <p><strong>📌 Modelo matemático:</strong> v(x) = B/(x + k) + v₀</p>
+        <p><strong>📌 Primera derivada (tasa de cambio de velocidad):</strong> v'(x) = -B/(x + k)²</p>
+        <p><strong>🔍 Interpretación de v'(x):</strong> La derivada es <strong style="color:#a855f7">siempre negativa</strong>, lo que significa que cada conexión adicional <strong>disminuye la velocidad individual</strong>. El valor absoluto de v'(x) indica qué tan sensible es el sistema: en valores pequeños de x, el impacto es mayor; en valores grandes, el impacto se atenúa (rendimientos decrecientes).</p>
+        <p><strong>📌 Velocidad total:</strong> T(x) = x·v(x) = Bx/(x+k) + v₀·x</p>
+        <p><strong>📌 Derivada de la velocidad total:</strong> T'(x) = B·k/(x+k)² + v₀ (siempre positiva → la velocidad total <strong>siempre crece</strong> con más conexiones, pero cada vez más lentamente).</p>
+        <p><strong>📌 Eficiencia:</strong> E(x) = [T(x)/B] × 100% → muestra qué porcentaje del ancho de banda total se está utilizando.</p>
+    </div>
+
+    <footer>
+        Proyecto 3 - Velocidad de transferencia de datos | Aplicación del cálculo diferencial en TI<br>
+        Modelo: v(x) = B/(x+k) + v₀ | B: ancho de banda | k: factor de sobrecarga | v₀: velocidad mínima garantizada
+    </footer>
+</div>
+
+<script>
+    let chartVelocidad = null;
+    let chartTotal = null;
+    let chartDerivada = null;
+    let chartEficiencia = null;
+
+    function actualizarModelo() {
+        let B = parseFloat(document.getElementById('bandwidth').value);
+        let k = parseFloat(document.getElementById('overhead').value);
+        let v0 = parseFloat(document.getElementById('minSpeed').value);
+        let maxX = parseFloat(document.getElementById('maxX').value);
+        
+        if (isNaN(B) || isNaN(k) || isNaN(v0) || isNaN(maxX)) return;
+        if (k <= 0) k = 0.1;
+        if (maxX <= 0) maxX = 60;
+        
+        const xMin = 0;
+        const xMax = maxX;
+        const paso = 0.5;
+        const puntosX = [];
+        const valoresV = [];
+        const valoresT = [];
+        const valoresDeriv = [];
+        const valoresEficiencia = [];
+        
+        for (let x = xMin; x <= xMax; x += paso) {
+            puntosX.push(x);
+            let v = B / (x + k) + v0;
+            let T = x * v;
+            let deriv = -B / Math.pow(x + k, 2);
+            let eficiencia = (T / B) * 100;
+            valoresV.push(v);
+            valoresT.push(T);
+            valoresDeriv.push(deriv);
+            valoresEficiencia.push(Math.min(eficiencia, 200)); // Cap para visualización
+        }
+        
+        // Encontrar punto óptimo (velocidad >= 10 Mbps)
+        let conexionesOptimas = 0;
+        let velocidadOptima = B / (0 + k) + v0;
+        for (let x = 0; x <= maxX; x++) {
+            let v = B / (x + k) + v0;
+            if (v >= 10) {
+                conexionesOptimas = x;
+                velocidadOptima = v;
+            }
+        }
+        
+        let velocidadTotalOptima = conexionesOptimas * velocidadOptima;
+        let derivadaOptima = -B / Math.pow(conexionesOptimas + k, 2);
+        let eficienciaOptima = (velocidadTotalOptima / B) * 100;
+        
+        document.getElementById('conexionesOptimas').innerHTML = conexionesOptimas;
+        document.getElementById('velocidadOptima').innerHTML = velocidadOptima.toFixed(2);
+        document.getElementById('velocidadTotalOptima').innerHTML = velocidadTotalOptima.toFixed(2);
+        document.getElementById('derivadaValor').innerHTML = derivadaOptima.toFixed(4);
+        document.getElementById('eficienciaOptima').innerHTML = eficienciaOptima.toFixed(1);
+        document.getElementById('formulaModelo').innerHTML = `v(x) = ${B}/(x + ${k}) + ${v0} Mbps`;
+        
+        let recomendacionHTML = `
+            <div class="recomendacion">
+                <strong>💡 Decisiones técnicas basadas en el modelo:</strong><br><br>
+                • <strong>Límite de conexiones:</strong> Se recomienda un máximo de <strong style="color:#a855f7">${conexionesOptimas} conexiones simultáneas</strong> por servidor para garantizar al menos 10 Mbps por usuario.<br>
+                • <strong>Interpretación de la derivada:</strong> v'(${conexionesOptimas}) = ${derivadaOptima.toFixed(4)} indica que en el punto óptimo, agregar una conexión adicional reduce la velocidad individual en ${Math.abs(derivadaOptima).toFixed(2)} Mbps.<br>
+                • <strong>Balanceo de carga:</strong> Implementar un balanceador que distribuya nuevas solicitudes a otros servidores cuando se alcancen las ${conexionesOptimas} conexiones.<br>
+                • <strong>Monitoreo proactivo:</strong> Si la derivada v'(x) supera en valor absoluto 0.5 (zona de alta sensibilidad), el sistema opera en una región ineficiente. Ajustar políticas de admisión de conexiones.<br>
+                • <strong>Eficiencia alcanzada:</strong> En el punto óptimo, se utiliza el <strong>${eficienciaOptima.toFixed(1)}%</strong> del ancho de banda total disponible.
+            </div>
+        `;
+        document.getElementById('recomendacionContainer').innerHTML = recomendacionHTML;
+        
+        function destroyChart(chart) {
+            if (chart) {
+                chart.destroy();
+            }
+            return null;
+        }
+        
+        // Gráfica 1: Velocidad por conexión
+        const ctx1 = document.getElementById('graficaVelocidad').getContext('2d');
+        destroyChart(chartVelocidad);
+        chartVelocidad = new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: puntosX,
+                datasets: [{
+                    label: 'v(x) = Velocidad por conexión (Mbps)',
+                    data: valoresV,
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.1,
+                    fill: true,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { labels: { color: '#cbd5e1' } },
+                    tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Conexiones activas', color: '#9ca3af' }, grid: { color: '#2d2d35' } },
+                    y: { title: { display: true, text: 'Mbps', color: '#9ca3af' }, grid: { color: '#2d2d35' }, beginAtZero: true }
+                }
+            }
+        });
+        
+        // Gráfica 2: Velocidad total
+        const ctx2 = document.getElementById('graficaTotal').getContext('2d');
+        destroyChart(chartTotal);
+        chartTotal = new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: puntosX,
+                datasets: [{
+                    label: 'T(x) = Velocidad total (Mbps)',
+                    data: valoresT,
+                    borderColor: '#a855f7',
+                    backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.1,
+                    fill: true,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { labels: { color: '#cbd5e1' } },
+                    tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Conexiones activas', color: '#9ca3af' }, grid: { color: '#2d2d35' } },
+                    y: { title: { display: true, text: 'Mbps', color: '#9ca3af' }, grid: { color: '#2d2d35' }, beginAtZero: true }
+                }
+            }
+        });
+        
+        // Gráfica 3: Derivada v'(x)
+        const ctx3 = document.getElementById('graficaDerivada').getContext('2d');
+        destroyChart(chartDerivada);
+        chartDerivada = new Chart(ctx3, {
+            type: 'line',
+            data: {
+                labels: puntosX,
+                datasets: [{
+                    label: "v'(x) = Tasa de cambio (Mbps por conexión)",
+                    data: valoresDeriv,
+                    borderColor: '#f97316',
+                    backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.1,
+                    fill: true,
+                    pointRadius: 0,
+                    borderDash: [5, 5]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { labels: { color: '#cbd5e1' } },
+                    tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Conexiones activas', color: '#9ca3af' }, grid: { color: '#2d2d35' } },
+                    y: { title: { display: true, text: 'ΔMbps / Δconexión', color: '#9ca3af' }, grid: { color: '#2d2d35' } }
+                }
+            }
+        });
+        
+        // Gráfica 4: Eficiencia
+        const ctx4 = document.getElementById('graficaEficiencia').getContext('2d');
+        destroyChart(chartEficiencia);
+        chartEficiencia = new Chart(ctx4, {
+            type: 'line',
+            data: {
+                labels: puntosX,
+                datasets: [{
+                    label: 'E(x) = Eficiencia (%)',
+                    data: valoresEficiencia,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.1,
+                    fill: true,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { labels: { color: '#cbd5e1' } },
+                    tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Conexiones activas', color: '#9ca3af' }, grid: { color: '#2d2d35' } },
+                    y: { title: { display: true, text: 'Eficiencia (%)', color: '#9ca3af' }, grid: { color: '#2d2d35' }, min: 0, max: 200 }
+                }
+            }
+        });
+    }
+    
+    document.getElementById('updateBtn').addEventListener('click', actualizarModelo);
+    actualizarModelo();
+</script>
+</body>
+</html>
